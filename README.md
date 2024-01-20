@@ -10,4 +10,5 @@ automatically install and use pinned Go version.
 
 ### Things to note
 - tests can be a little flaky for huge amounts of concurrent requests (as far as I'm aware that's because of machine running out of RAM)
+- this library caches keys indefinitely right now, but it's quite easy to add cache invalidation scheme
 

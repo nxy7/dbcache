@@ -28,6 +28,9 @@ func MakeCache[T any](dataSource DataSource[T]) *Cache[T] {
 	}
 }
 
+// Get function tries to fetch data from cache or retrieves it using DataSource
+// to avoid multiple requests per key in case 2 requests were made simultaneously we're
+// using singleflight (key-action store) that takes care of avoiding duplicate work
 func (c *Cache[T]) Get(key string) (*T, error) {
 	val, ok := c.m.Load(key)
 	if ok {
