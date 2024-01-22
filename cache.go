@@ -39,6 +39,13 @@ func (c *Cache[T]) Get(key string) (*T, error) {
 	}
 
 	v, err, _ := c.s.Do(key, func() (any, error) {
+		// check if key is present again, under exteme loads due to thread scheduling it's possible that 2 invokations still end up here
+		val, ok := c.m.Load(key)
+		if ok {
+			as_t := val.(*T)
+			return as_t, nil
+		}
+
 		val, err := c.dataSource.Get(key)
 		if err == nil {
 			c.m.Store(key, val)
