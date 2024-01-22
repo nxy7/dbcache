@@ -5,7 +5,6 @@ import (
 	"math/rand"
 	"sync"
 	"sync/atomic"
-	"time"
 
 	"github.com/go-faker/faker/v4"
 	"github.com/nxy7/dbcache"
@@ -32,15 +31,11 @@ func MakeFakeDataSource(userAmount uint32, shouldFail bool) *FakeDataSource {
 	return &f
 }
 
-// Get that simulates network latency
 func (f *FakeDataSource) Get(key string) (*User, error) {
 	f.mutex.RLock()
 	defer f.mutex.RUnlock()
 
 	f.accessCount.Add(1)
-
-	waitTime := rand.Uint32()%900 + 200
-	time.Sleep(time.Millisecond * time.Duration(waitTime))
 
 	if f.shouldFail {
 		return nil, fmt.Errorf("simulated source error")

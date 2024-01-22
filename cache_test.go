@@ -84,11 +84,15 @@ func makeConcurrencyTest(userAmount, requestAmount int) func(t *testing.T) {
 		testCache := dbcache.MakeCache[User](dataSource)
 		keys := dataSource.GetAllKeys()
 
+		totalRequestAmount := userAmount * requestAmount
+
+		var reqPerSec float64
 		var wg sync.WaitGroup
+
 		startTime := time.Now()
-		for i := range keys {
+		for i := 0; i < userAmount; i++ {
+			wg.Add(requestAmount)
 			for k := 0; k < requestAmount; k++ {
-				wg.Add(1)
 				go func(key string) {
 					defer wg.Done()
 
@@ -96,15 +100,21 @@ func makeConcurrencyTest(userAmount, requestAmount int) func(t *testing.T) {
 					assert.Nil(t, err)
 					assert.NotNil(t, u)
 				}(keys[i])
-				time.Sleep(time.Nanosecond * 50)
 			}
 		}
-		endTime := time.Now()
-		durationMs := endTime.Sub(startTime).Milliseconds()
-		var reqPerSec float64
-		reqPerSec = 1000 / float64(durationMs) * float64(userAmount) * float64(requestAmount)
-		fmt.Printf("reqPerSec: %v\n", reqPerSec)
+
+		requestTime := time.Now()
+		durationMs := requestTime.Sub(startTime).Milliseconds()
+		reqPerSec = float64(totalRequestAmount) * 1000 / float64(durationMs)
+		fmt.Printf("requests per second: %v\n", reqPerSec)
+
 		wg.Wait()
+
+		responseTime := time.Now()
+		durationMs = responseTime.Sub(startTime).Milliseconds()
+		reqPerSec = float64(totalRequestAmount) * 1000 / float64(durationMs)
+		fmt.Printf("responses per second: %v\n", reqPerSec)
+		fmt.Printf("served responses in %v ms\n", durationMs)
 		assert.Equal(t, userAmount, dataSource.AccessCount())
 	}
 }
